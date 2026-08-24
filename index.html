@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Store Sales Analytics Report</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f6fa;
+  --card: #fff;
+  --border: #e8eaed;
+  --text: #1a1a2e;
+  --text-secondary: #6b7280;
+  --blue: #2563eb;
+  --blue-light: #eff6ff;
+  --green: #059669;
+  --green-light: #ecfdf5;
+  --amber: #d97706;
+  --amber-light: #fffbeb;
+  --red: #dc2626;
+  --red-light: #fef2f2;
+  --gray: #9ca3af;
+  --sidebar: #111827;
+  --radius: 8px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: var(--sidebar);
+  color: #94a3b8;
+  padding: 20px 0;
+  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+}
+.sidebar-logo {
+  padding: 0 20px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+.sidebar-logo span { color: var(--blue); }
+.sidebar-section {
+  padding: 8px 20px 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #4b5563;
+}
+.sidebar-item {
+  padding: 9px 20px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all .15s;
+}
+.sidebar-item:hover { background: #1f2937; color: #e5e7eb; }
+.sidebar-item.active { background: #1e3a5f; color: #60a5fa; }
+.sidebar-item svg { width: 16px; height: 16px; opacity: .6; }
+
+/* Main */
+.main {
+  margin-left: 220px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Top bar */
+.topbar {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.topbar-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.topbar-meta .status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.topbar-meta .status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+/* Filter bar */
+.filter-bar {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.filter-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.filter-select {
+  padding: 5px 24px 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E") right 8px center no-repeat;
+  appearance: none;
+  cursor: pointer;
+  color: var(--text);
+}
+.filter-select:focus { outline: none; border-color: var(--blue); }
+.filter-divider { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+.period-tabs {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 2px;
+  margin-left: auto;
+}
+.period-tab {
+  padding: 5px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all .15s;
+  border: none;
+  background: transparent;
+}
+.period-tab.active {
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(37,99,235,.3);
+}
+
+/* Content */
+.content { padding: 20px 28px 40px; }
+
+/* Cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+.card-subtitle {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* KPI row */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  position: relative;
+}
+.kpi-card.alert { border-left: 3px solid var(--amber); }
+.kpi-card.good { border-left: 3px solid var(--green); }
+.kpi-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.kpi-sub {
+  font-size: 11px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.kpi-sub.up { color: var(--green); }
+.kpi-sub.down { color: var(--red); }
+.kpi-sub.neutral { color: var(--text-secondary); }
+
+/* Achievement ring */
+.ring-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.ring-svg { width: 64px; height: 64px; }
+.ring-text {
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--text);
+}
+.ring-info { flex: 1; }
+
+/* Grid layouts */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.grid-23 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+.grid-32 { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; }
+.mb-16 { margin-bottom: 16px; }
+
+/* Section title */
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 20px 0 12px;
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title:first-child { margin-top: 0; }
+
+/* Insights */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.insight-card {
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 12px;
+  border: 1px solid;
+}
+.insight-card.warn {
+  background: var(--amber-light);
+  border-color: #fde68a;
+}
+.insight-card.danger {
+  background: var(--red-light);
+  border-color: #fecaca;
+}
+.insight-card.info {
+  background: var(--blue-light);
+  border-color: #bfdbfe;
+}
+.insight-icon {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.insight-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+}
+.insight-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+th {
+  text-align: left;
+  padding: 8px 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 11px;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  background: #fafbfc;
+}
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+tr:hover td { background: #f9fafb; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .3px;
+}
+.badge-sun { background: #fef3c7; color: #92400e; }
+.badge-opt { background: #dbeafe; color: #1e40af; }
+.badge-col { background: #ede9fe; color: #5b21b6; }
+.badge-acc { background: #d1fae5; color: #065f46; }
+.badge-reorder { background: var(--red-light); color: var(--red); }
+.badge-watch { background: var(--amber-light); color: var(--amber); }
+.badge-stable { background: var(--green-light); color: var(--green); }
+.badge-slow { background: #f3f4f6; color: #6b7280; }
+
+/* Progress bar */
+.progress-bar {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 60px;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .3s;
+}
+.progress-fill.blue { background: var(--blue); }
+.progress-fill.green { background: var(--green); }
+.progress-fill.amber { background: var(--amber); }
+.progress-fill.red { background: var(--red); }
+
+/* Category bars */
+.cat-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.cat-row:last-child { border-bottom: none; }
+.cat-label { width: 50px; font-weight: 600; font-size: 12px; }
+.cat-bar-wrap { flex: 1; }
+.cat-bar {
+  height: 20px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.cat-bar-sold {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+}
+.cat-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  width: 260px;
+  justify-content: flex-end;
+}
+.cat-stats span { white-space: nowrap; }
+
+/* YoY comparison */
+.yoy-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+.yoy-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.yoy-label { width: 80px; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+.yoy-bar-wrap { flex: 1; }
+.yoy-bar {
+  height: 28px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+.yoy-value { width: 80px; text-align: right; font-weight: 600; font-size: 13px; }
+
+/* Summary section */
+.summary-input-area {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+.summary-select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  min-width: 140px;
+}
+.summary-textarea {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+.summary-textarea:focus, .summary-select:focus { outline: none; border-color: var(--blue); }
+.btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { background: #1d4ed8; }
+
+.summary-list { display: flex; flex-direction: column; gap: 8px; }
+.summary-item {
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #f3f4f6;
+}
+.summary-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.summary-item-header .type-badge {
+  background: var(--blue-light);
+  color: var(--blue);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.summary-item-text { font-size: 12px; color: var(--text); line-height: 1.5; }
+
+/* Sell-through overview mini */
+.st-overview {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.st-big {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--blue);
+}
+.st-detail { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+/* Scrollable table */
+.table-wrap {
+  overflow-x: auto;
+  margin: 0 -20px;
+  padding: 0 20px;
+}
+
+/* Arrow indicators */
+.arrow-up::before { content: '▲ '; font-size: 9px; }
+.arrow-down::before { content: '▼ '; font-size: 9px; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">IIC <span>BO</span></div>
+  <div class="sidebar-section">Main</div>
+  <div class="sidebar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </div>
+  <div class="sidebar-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-6 4 4 6-8"/></svg>
+    Sales Analytics
+  </div>
+  <div class="sidebar-section">Management</div>
+  <div class="sidebar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+    Orders
+  </div>
+  <div class="sidebar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Store Mgmt
+  </div>
+  <div class="sidebar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Settings
+  </div>
+</aside>
+
+<!-- Main Content -->
+<div class="main">
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-title">Sales Analytics Report</div>
+    <div class="topbar-meta">
+      <span class="status">Live</span>
+      <span>Data as of: 2026-08-21 09:00 KST</span>
+      <span>Store: Gangnam Flagship</span>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Brand</span>
+      <select class="filter-select"><option>GM</option><option>TB</option><option>ND</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Country</span>
+      <select class="filter-select"><option>US</option><option>KR</option><option>CN</option><option>JP</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Channel</span>
+      <select class="filter-select"><option>ALL</option><option>FS</option><option>Mall</option><option>Department</option><option>Duty Free</option><option>Online</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Store</span>
+      <select class="filter-select"><option>SoHo Flagship</option><option>Nordstrom NYC</option><option>ALL</option></select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">Category</span>
+      <select class="filter-select"><option>ALL</option><option>SUN</option><option>OPT</option><option>COL</option><option>ACC</option></select>
+    </div>
+    <div class="period-tabs">
+      <button class="period-tab">DAY</button>
+      <button class="period-tab active">WEEK</button>
+      <button class="period-tab">MONTH</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Section 1: KPI Cards -->
+    <div class="kpi-row">
+      <div class="kpi-card alert">
+        <div class="kpi-label">Achievement Rate 목표 달성률</div>
+        <div class="ring-container">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#e5e7eb" stroke-width="6"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#d97706" stroke-width="6"
+              stroke-dasharray="144.5 163.4" stroke-dashoffset="40.8"
+              transform="rotate(-90 32 32)" stroke-linecap="round"/>
+            <text x="32" y="35" text-anchor="middle" class="ring-text">88.6%</text>
+          </svg>
+          <div class="ring-info">
+            <div style="font-size:11px;color:var(--text-secondary)">Target</div>
+            <div style="font-size:14px;font-weight:600">$1,400K</div>
+            <div style="font-size:11px;color:var(--amber);font-weight:600;margin-top:2px">Gap -$160K</div>
+          </div>
+        </div>
+      </div>
+      <div class="kpi-card good">
+        <div class="kpi-label">Actual Sales 실매출</div>
+        <div class="kpi-value">$1,240K</div>
+        <div class="kpi-sub up">
+          <span class="arrow-up"></span>+5.2% YoY
+        </div>
+        <div class="kpi-sub neutral" style="margin-top:2px">
+          Target $1,400K
+        </div>
+      </div>
+      <div class="kpi-card good">
+        <div class="kpi-label">Sold Qty 판매수량</div>
+        <div class="kpi-value">3,872</div>
+        <div class="kpi-sub up">
+          <span class="arrow-up"></span>+3.8% YoY
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">ATV 객단가 / CVR 전환율</div>
+        <div class="kpi-value">$320</div>
+        <div class="kpi-sub up">
+          <span class="arrow-up"></span>+1.3% YoY
+        </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <div class="kpi-label" style="margin-bottom:2px">Conversion Rate</div>
+          <div style="font-size:16px;font-weight:700">18.5%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Action Insights -->
+    <div class="section-title">Action Insights</div>
+    <div class="insights-grid mb-16">
+      <div class="insight-card warn">
+        <div class="insight-icon">📉</div>
+        <div class="insight-label">Category WoW</div>
+        <div class="insight-text">Optical 전주 대비<br><strong>-8.4pt 하락</strong></div>
+      </div>
+      <div class="insight-card danger">
+        <div class="insight-icon">🎯</div>
+        <div class="insight-label">Sales Gap</div>
+        <div class="insight-text">이번 주 목표까지<br><strong>$160K 부족</strong></div>
+      </div>
+      <div class="insight-card warn">
+        <div class="insight-icon">🚶</div>
+        <div class="insight-label">Entry Traffic</div>
+        <div class="insight-text">입점객 전년 동기간 대비<br><strong>-7.5%</strong></div>
+      </div>
+      <div class="insight-card danger">
+        <div class="insight-icon">⚠️</div>
+        <div class="insight-label">Loss Risk</div>
+        <div class="insight-text">Top20 누적 Loss<br><strong>$7.7K</strong></div>
+      </div>
+      <div class="insight-card info">
+        <div class="insight-icon">📦</div>
+        <div class="insight-label">Reorder</div>
+        <div class="insight-text">Mondo 01, Fish Tail<br><strong>재고 보충 우선</strong></div>
+      </div>
+    </div>
+
+    <!-- Section 3 & 4: Sell-through + Entry Traffic -->
+    <div class="grid-2 mb-16">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Sell-through Overview</div>
+        </div>
+        <div class="st-overview">
+          <div>
+            <div class="st-big">62.4%</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">Overall Sell-through</div>
+          </div>
+          <div style="flex:1;padding-left:20px;border-left:1px solid var(--border)">
+            <div class="st-detail">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span>Available Qty</span><strong>6,205</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span>Sold Qty</span><strong>3,872</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span>Remaining Stock</span><strong>2,333</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <div class="progress-bar" style="height:10px">
+            <div class="progress-fill blue" style="width:62.4%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--text-secondary)">
+            <span>0%</span><span>62.4% Sold</span><span>100%</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Entry Traffic YoY 입점객 비교</div>
+          <div class="card-subtitle">Weekly</div>
+        </div>
+        <div class="yoy-bars">
+          <div class="yoy-row">
+            <div class="yoy-label">2026</div>
+            <div class="yoy-bar-wrap">
+              <div class="yoy-bar" style="width:85%;background:var(--blue)">4,250</div>
+            </div>
+            <div class="yoy-value">4,250</div>
+          </div>
+          <div class="yoy-row">
+            <div class="yoy-label">2025</div>
+            <div class="yoy-bar-wrap">
+              <div class="yoy-bar" style="width:92%;background:#93c5fd">4,594</div>
+            </div>
+            <div class="yoy-value">4,594</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary)">Entry YoY</div>
+            <div style="font-size:16px;font-weight:700;color:var(--red)">-7.5%</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary)">CVR (Conversion)</div>
+            <div style="font-size:16px;font-weight:700">18.5%</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary)">Transactions</div>
+            <div style="font-size:16px;font-weight:700">786</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Product Top20 -->
+    <div class="card mb-16">
+      <div class="card-header">
+        <div class="card-title">Product Top 20 with Loss</div>
+        <div class="card-subtitle">정렬: 판매수량 기준</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="text-center" style="width:40px">#</th>
+              <th style="width:60px">Type</th>
+              <th>Product SKU</th>
+              <th class="text-right">Sold</th>
+              <th class="text-right">ST%</th>
+              <th style="width:100px">ST Bar</th>
+              <th class="text-right">Stock</th>
+              <th class="text-right">Loss</th>
+              <th class="text-right">YoY</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-center">1</td>
+              <td><span class="badge badge-sun">SUN</span></td>
+              <td><strong>Mondo 01</strong> <span style="color:var(--text-secondary)">GM-SN-001</span></td>
+              <td class="text-right"><strong>342</strong></td>
+              <td class="text-right">78.4%</td>
+              <td><div class="progress-bar"><div class="progress-fill amber" style="width:78.4%"></div></div></td>
+              <td class="text-right" style="color:var(--red)">12</td>
+              <td class="text-right" style="color:var(--red)">$2,180</td>
+              <td class="text-right" style="color:var(--green)"><span class="arrow-up"></span>+12.3%</td>
+            </tr>
+            <tr>
+              <td class="text-center">2</td>
+              <td><span class="badge badge-sun">SUN</span></td>
+              <td><strong>Fish Tail 02</strong> <span style="color:var(--text-secondary)">GM-SN-015</span></td>
+              <td class="text-right"><strong>298</strong></td>
+              <td class="text-right">82.1%</td>
+              <td><div class="progress-bar"><div class="progress-fill red" style="width:82.1%"></div></div></td>
+              <td class="text-right" style="color:var(--red)">8</td>
+              <td class="text-right" style="color:var(--red)">$1,850</td>
+              <td class="text-right" style="color:var(--green)"><span class="arrow-up"></span>+8.7%</td>
+            </tr>
+            <tr>
+              <td class="text-center">3</td>
+              <td><span class="badge badge-opt">OPT</span></td>
+              <td><strong>Dreamer 17</strong> <span style="color:var(--text-secondary)">GM-OP-003</span></td>
+              <td class="text-right"><strong>256</strong></td>
+              <td class="text-right">64.0%</td>
+              <td><div class="progress-bar"><div class="progress-fill blue" style="width:64%"></div></div></td>
+              <td class="text-right">38</td>
+              <td class="text-right" style="color:var(--amber)">$940</td>
+              <td class="text-right" style="color:var(--red)"><span class="arrow-down"></span>-3.2%</td>
+            </tr>
+            <tr>
+              <td class="text-center">4</td>
+              <td><span class="badge badge-sun">SUN</span></td>
+              <td><strong>Rococo A02</strong> <span style="color:var(--text-secondary)">GM-SN-022</span></td>
+              <td class="text-right"><strong>231</strong></td>
+              <td class="text-right">57.8%</td>
+              <td><div class="progress-bar"><div class="progress-fill blue" style="width:57.8%"></div></div></td>
+              <td class="text-right">42</td>
+              <td class="text-right">$320</td>
+              <td class="text-right" style="color:var(--green)"><span class="arrow-up"></span>+5.1%</td>
+            </tr>
+            <tr>
+              <td class="text-center">5</td>
+              <td><span class="badge badge-col">COL</span></td>
+              <td><strong>MM108 x Disney</strong> <span style="color:var(--text-secondary)">GM-CL-008</span></td>
+              <td class="text-right"><strong>214</strong></td>
+              <td class="text-right">71.3%</td>
+              <td><div class="progress-bar"><div class="progress-fill amber" style="width:71.3%"></div></div></td>
+              <td class="text-right" style="color:var(--amber)">18</td>
+              <td class="text-right" style="color:var(--amber)">$760</td>
+              <td class="text-right" style="color:var(--green)"><span class="arrow-up"></span>+22.4%</td>
+            </tr>
+            <tr>
+              <td class="text-center">6</td>
+              <td><span class="badge badge-opt">OPT</span></td>
+              <td><strong>Loar 01</strong> <span style="color:var(--text-secondary)">GM-OP-011</span></td>
+              <td class="text-right"><strong>198</strong></td>
+              <td class="text-right">49.5%</td>
+              <td><div class="progress-bar"><div class="progress-fill blue" style="width:49.5%"></div></div></td>
+              <td class="text-right">56</td>
+              <td class="text-right">$0</td>
+              <td class="text-right" style="color:var(--green)"><span class="arrow-up"></span>+1.8%</td>
+            </tr>
+            <tr>
+              <td class="text-center">7</td>
+              <td><span class="badge badge-sun">SUN</span></td>
+              <td><strong>South Side 04</strong> <span style="color:var(--text-secondary)">GM-SN-037</span></td>
+              <td class="text-right"><strong>187</strong></td>
+              <td class="text-right">62.3%</td>
+              <td><div class="progress-bar"><div class="progress-fill blue" style="width:62.3%"></div></div></td>
+              <td class="text-right">30</td>
+              <td class="text-right" style="color:var(--amber)">$580</td>
+              <td class="text-right" style="color:var(--red)"><span class="arrow-down"></span>-1.4%</td>
+            </tr>
+            <tr>
+              <td class="text-center">8</td>
+              <td><span class="badge badge-acc">ACC</span></td>
+              <td><strong>Case Leather BK</strong> <span style="color:var(--text-secondary)">GM-AC-002</span></td>
+              <td class="text-right"><strong>176</strong></td>
+              <td class="text-right">44.0%</td>
+              <td><div class="progress-bar"><div class="progress-fill green" style="width:44%"></div></div></td>
+              <td class="text-right">88</td>
+              <td class="text-right">$0</td>
+              <td class="text-right" style="color:var(--green)"><span class="arrow-up"></span>+6.2%</td>
+            </tr>
+            <tr>
+              <td class="text-center">9</td>
+              <td><span class="badge badge-opt">OPT</span></td>
+              <td><strong>My Ma 08</strong> <span style="color:var(--text-secondary)">GM-OP-019</span></td>
+              <td class="text-right"><strong>164</strong></td>
+              <td class="text-right">54.7%</td>
+              <td><div class="progress-bar"><div class="progress-fill blue" style="width:54.7%"></div></div></td>
+              <td class="text-right">34</td>
+              <td class="text-right">$210</td>
+              <td class="text-right" style="color:var(--red)"><span class="arrow-down"></span>-5.8%</td>
+            </tr>
+            <tr>
+              <td class="text-center">10</td>
+              <td><span class="badge badge-sun">SUN</span></td>
+              <td><strong>Volt 01</strong> <span style="color:var(--text-secondary)">GM-SN-042</span></td>
+              <td class="text-right"><strong>153</strong></td>
+              <td class="text-right">51.0%</td>
+              <td><div class="progress-bar"><div class="progress-fill blue" style="width:51%"></div></div></td>
+              <td class="text-right">45</td>
+              <td class="text-right">$0</td>
+              <td class="text-right" style="color:var(--green)"><span class="arrow-up"></span>+9.1%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 6 & 7: Category ST + SKU Detail -->
+    <div class="grid-32 mb-16">
+      <!-- SKU Sell-through Detail -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">SKU Sell-through Detail</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th class="text-right">Inbound</th>
+                <th class="text-right">Sold</th>
+                <th class="text-right">ST%</th>
+                <th class="text-right">Loss</th>
+                <th class="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>GM-SN-001 Mondo 01</td>
+                <td class="text-right">436</td>
+                <td class="text-right">342</td>
+                <td class="text-right"><strong>78.4%</strong></td>
+                <td class="text-right" style="color:var(--red)">$2,180</td>
+                <td class="text-center"><span class="badge badge-reorder">Reorder</span></td>
+              </tr>
+              <tr>
+                <td>GM-SN-015 Fish Tail 02</td>
+                <td class="text-right">363</td>
+                <td class="text-right">298</td>
+                <td class="text-right"><strong>82.1%</strong></td>
+                <td class="text-right" style="color:var(--red)">$1,850</td>
+                <td class="text-center"><span class="badge badge-reorder">Reorder</span></td>
+              </tr>
+              <tr>
+                <td>GM-CL-008 MM108 x Disney</td>
+                <td class="text-right">300</td>
+                <td class="text-right">214</td>
+                <td class="text-right"><strong>71.3%</strong></td>
+                <td class="text-right" style="color:var(--amber)">$760</td>
+                <td class="text-center"><span class="badge badge-reorder">Reorder</span></td>
+              </tr>
+              <tr>
+                <td>GM-OP-003 Dreamer 17</td>
+                <td class="text-right">400</td>
+                <td class="text-right">256</td>
+                <td class="text-right">64.0%</td>
+                <td class="text-right" style="color:var(--amber)">$940</td>
+                <td class="text-center"><span class="badge badge-watch">Watch</span></td>
+              </tr>
+              <tr>
+                <td>GM-SN-037 South Side 04</td>
+                <td class="text-right">300</td>
+                <td class="text-right">187</td>
+                <td class="text-right">62.3%</td>
+                <td class="text-right" style="color:var(--amber)">$580</td>
+                <td class="text-center"><span class="badge badge-watch">Watch</span></td>
+              </tr>
+              <tr>
+                <td>GM-OP-019 My Ma 08</td>
+                <td class="text-right">300</td>
+                <td class="text-right">164</td>
+                <td class="text-right">54.7%</td>
+                <td class="text-right">$210</td>
+                <td class="text-center"><span class="badge badge-watch">Watch</span></td>
+              </tr>
+              <tr>
+                <td>GM-SN-042 Volt 01</td>
+                <td class="text-right">300</td>
+                <td class="text-right">153</td>
+                <td class="text-right">51.0%</td>
+                <td class="text-right">$0</td>
+                <td class="text-center"><span class="badge badge-watch">Watch</span></td>
+              </tr>
+              <tr>
+                <td>GM-OP-011 Loar 01</td>
+                <td class="text-right">400</td>
+                <td class="text-right">198</td>
+                <td class="text-right">49.5%</td>
+                <td class="text-right">$0</td>
+                <td class="text-center"><span class="badge badge-stable">Stable</span></td>
+              </tr>
+              <tr>
+                <td>GM-AC-002 Case Leather BK</td>
+                <td class="text-right">400</td>
+                <td class="text-right">176</td>
+                <td class="text-right">44.0%</td>
+                <td class="text-right">$0</td>
+                <td class="text-center"><span class="badge badge-stable">Stable</span></td>
+              </tr>
+              <tr>
+                <td>GM-AC-009 Cleaning Kit</td>
+                <td class="text-right">500</td>
+                <td class="text-right">112</td>
+                <td class="text-right">22.4%</td>
+                <td class="text-right">$0</td>
+                <td class="text-center"><span class="badge badge-slow">Slow</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Category Sell-through -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Category Sell-through</div>
+        </div>
+        <div>
+          <div class="cat-row">
+            <div class="cat-label"><span class="badge badge-sun">SUN</span></div>
+            <div class="cat-bar-wrap">
+              <div class="cat-bar">
+                <div class="cat-bar-sold" style="width:68%;background:#f59e0b">68%</div>
+              </div>
+            </div>
+            <div class="cat-stats">
+              <span>Sold <strong>1,842</strong></span>
+              <span>Stock <strong>420</strong></span>
+            </div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-label"><span class="badge badge-opt">OPT</span></div>
+            <div class="cat-bar-wrap">
+              <div class="cat-bar">
+                <div class="cat-bar-sold" style="width:54%;background:#3b82f6">54%</div>
+              </div>
+            </div>
+            <div class="cat-stats">
+              <span>Sold <strong>1,126</strong></span>
+              <span>Stock <strong>580</strong></span>
+            </div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-label"><span class="badge badge-col">COL</span></div>
+            <div class="cat-bar-wrap">
+              <div class="cat-bar">
+                <div class="cat-bar-sold" style="width:71%;background:#8b5cf6">71%</div>
+              </div>
+            </div>
+            <div class="cat-stats">
+              <span>Sold <strong>548</strong></span>
+              <span>Stock <strong>145</strong></span>
+            </div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-label"><span class="badge badge-acc">ACC</span></div>
+            <div class="cat-bar-wrap">
+              <div class="cat-bar">
+                <div class="cat-bar-sold" style="width:38%;background:#10b981">38%</div>
+              </div>
+            </div>
+            <div class="cat-stats">
+              <span>Sold <strong>356</strong></span>
+              <span>Stock <strong>1,188</strong></span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:16px;font-size:11px;color:var(--text-secondary)">
+          <span>Total Available <strong style="color:var(--text)">6,205</strong></span>
+          <span>Total Sold <strong style="color:var(--text)">3,872</strong></span>
+          <span>Total Remaining <strong style="color:var(--text)">2,333</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 8: Summary -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Daily / Weekly / Monthly Summary</div>
+        <div class="card-subtitle">Weekly Summary &mdash; W34 (08.18 ~ 08.24)</div>
+      </div>
+      <div class="summary-input-area">
+        <select class="summary-select">
+          <option>매출 변동</option>
+          <option>전환율 변동</option>
+          <option>상품 이슈</option>
+          <option>외부 환경</option>
+          <option>재고 이슈</option>
+        </select>
+        <textarea class="summary-textarea" placeholder="운영 코멘트를 입력하세요..."></textarea>
+        <button class="btn btn-primary">저장</button>
+      </div>
+      <div class="summary-list">
+        <div class="summary-item">
+          <div class="summary-item-header">
+            <span class="type-badge">매출 변동</span>
+            <span>Emily Park</span>
+            <span>2026-08-20</span>
+            <span>Weekly</span>
+          </div>
+          <div class="summary-item-text">주중 화~목 매출이 전주 대비 약 12% 하락. 주말 금~일 매출이 일부 회복하며 주간 목표 달성률 88.6%로 마감. Optical 카테고리 하락이 두드러지며, 인근 경쟁 매장(Warby Parker SoHo) 프로모션 영향 추정.</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-item-header">
+            <span class="type-badge">재고 이슈</span>
+            <span>Emily Park</span>
+            <span>2026-08-20</span>
+            <span>Weekly</span>
+          </div>
+          <div class="summary-item-text">Mondo 01, Fish Tail 02 재고 부족으로 주말 판매 기회 손실 발생. HQ에 긴급 재고 보충 요청 완료 (08.19). 예상 입고일 08.23.</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-item-header">
+            <span class="type-badge">외부 환경</span>
+            <span>Emily Park</span>
+            <span>2026-08-18</span>
+            <span>Daily</span>
+          </div>
+          <div class="summary-item-text">월요일 비 예보로 인해 입점객 전주 월요일 대비 약 15% 감소. 오후 2시 이후 회복세.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
